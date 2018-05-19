@@ -1,7 +1,4 @@
 {
-    "BitFlyer": [
-        "JPY"
-    ],
     "BitPay": [
         "AED",
         "AFN",
@@ -94,7 +91,7 @@
         "MMK",
         "MNT",
         "MOP",
-        "MRU",
+        "MRO",
         "MUR",
         "MVR",
         "MWK",
@@ -130,7 +127,7 @@
         "SLL",
         "SOS",
         "SRD",
-        "STN",
+        "STD",
         "SVC",
         "SYP",
         "SZL",
@@ -165,9 +162,6 @@
     ],
     "BitStamp": [
         "USD"
-    ],
-    "Bitbank": [
-        "JPY"
     ],
     "BitcoinAverage": [
         "AED",
@@ -337,9 +331,6 @@
         "ZAR",
         "ZMW",
         "ZWL"
-    ],
-    "Bitcointoyou": [
-        "BRL"
     ],
     "Bitmarket": [
         "PLN"
@@ -730,11 +721,11 @@
         "AED",
         "ARS",
         "AUD",
+        "BAM",
         "BDT",
         "BHD",
         "BOB",
         "BRL",
-        "BWP",
         "BYN",
         "CAD",
         "CHF",
@@ -749,7 +740,6 @@
         "ETH",
         "EUR",
         "GBP",
-        "GEL",
         "GHS",
         "HKD",
         "HRK",
@@ -764,7 +754,6 @@
         "KRW",
         "KZT",
         "LKR",
-        "LTC",
         "MAD",
         "MXN",
         "MYR",
@@ -776,17 +765,17 @@
         "PHP",
         "PKR",
         "PLN",
-        "PYG",
+        "QAR",
         "RON",
         "RSD",
         "RUB",
+        "RWF",
         "SAR",
         "SEK",
         "SGD",
-        "SZL",
         "THB",
         "TRY",
-        "TWD",
+        "TTD",
         "TZS",
         "UAH",
         "UGX",
@@ -794,8 +783,7 @@
         "UYU",
         "VEF",
         "VND",
-        "XAF",
-        "XRP",
+        "XAR",
         "ZAR",
         "ZMW"
     ],
@@ -805,13 +793,19 @@
     "NegocieCoins": [
         "BRL"
     ],
-    "TheRockTrading": [
-        "EUR"
-    ],
     "WEX": [
         "EUR",
         "RUB",
         "USD"
     ],
-    "itBit": []
-}
+     "itBit": [],
+     "Bitbank": [
+         "JPY"
+     ],
+     "BitFlyer": [
+         "JPY"
+     ],
+     "Zaif": [
+         "JPY"
+     ]
+ }

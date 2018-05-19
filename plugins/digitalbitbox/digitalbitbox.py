@@ -5,9 +5,8 @@
 
 try:
     import electrum
-    from electrum.bitcoin import TYPE_ADDRESS, push_script, var_int, msg_magic, Hash, verify_message, pubkey_from_signature, point_to_ser, public_key_to_p2pkh, EncodeAES, DecodeAES, MyVerifyingKey, is_address
+    from electrum.bitcoin import TYPE_ADDRESS, push_script, var_int, msg_magic, Hash, verify_message, pubkey_from_signature, point_to_ser, public_key_to_p2pkh, EncodeAES, DecodeAES, MyVerifyingKey
     from electrum.bitcoin import serialize_xpub, deserialize_xpub
-    from electrum.wallet import Standard_Wallet
     from electrum import constants
     from electrum.transaction import Transaction
     from electrum.i18n import _
@@ -96,7 +95,7 @@ class DigitalBitbox_Client():
 
 
     def get_xpub(self, bip32_path, xtype):
-        assert xtype in self.plugin.SUPPORTED_XTYPES
+        assert xtype in ('standard', 'p2wpkh-p2sh', 'p2wpkh')
         reply = self._get_xpub(bip32_path)
         if reply:
             xpub = reply['xpub']
@@ -644,8 +643,7 @@ class DigitalBitbox_KeyStore(Hardware_KeyStore):
                     sig_r = int(signed['sig'][:64], 16)
                     sig_s = int(signed['sig'][64:], 16)
                     sig = sigencode_der(sig_r, sig_s, generator_secp256k1.order())
-                    sig = to_hexstr(sig) + '01'
-                    Transaction.add_signature_to_txin(txin, ii, sig)
+                    txin['signatures'][ii] = to_hexstr(sig) + '01'
                     tx._inputs[i] = txin
         except UserCancelled:
             raise
@@ -664,7 +662,6 @@ class DigitalBitboxPlugin(HW_PluginBase):
     DEVICE_IDS = [
                    (0x03eb, 0x2402) # Digital Bitbox
                  ]
-    SUPPORTED_XTYPES = ('standard', 'p2wpkh-p2sh', 'p2wpkh', 'p2wsh-p2sh', 'p2wsh')
 
     def __init__(self, parent, config, name):
         HW_PluginBase.__init__(self, parent, config, name)
@@ -696,9 +693,6 @@ class DigitalBitboxPlugin(HW_PluginBase):
         devmgr = self.device_manager()
         device_id = device_info.device.id_
         client = devmgr.client_by_id(device_id)
-        if client is None:
-            raise Exception(_('Failed to create a client for this device.') + '\n' +
-                            _('Make sure it is in the correct state.'))
         client.handler = self.create_handler(wizard)
         if purpose == HWD_SETUP_NEW_WALLET:
             client.setupRunning = True
@@ -724,8 +718,8 @@ class DigitalBitboxPlugin(HW_PluginBase):
 
 
     def get_xpub(self, device_id, derivation, xtype, wizard):
-        if xtype not in self.SUPPORTED_XTYPES:
-            raise ScriptTypeNotSupported(_('This type of script is not supported with {}.').format(self.device))
+        if xtype not in ('standard', 'p2wpkh-p2sh', 'p2wpkh'):
+            raise ScriptTypeNotSupported(_('This type of script is not supported with the Digital Bitbox.'))
         devmgr = self.device_manager()
         client = devmgr.client_by_id(device_id)
         client.handler = self.create_handler(wizard)
@@ -743,20 +737,7 @@ class DigitalBitboxPlugin(HW_PluginBase):
             client.check_device_dialog()
         return client
 
-    def show_address(self, wallet, address, keystore=None):
-        if keystore is None:
-            keystore = wallet.get_keystore()
-        if not self.show_address_helper(wallet, address, keystore):
-            return
-        if type(wallet) is not Standard_Wallet:
-            keystore.handler.show_error(_('This function is only available for standard wallets when using {}.').format(self.device))
-            return
-        if not self.is_mobile_paired():
-            keystore.handler.show_error(_('This function is only available after pairing your {} with a mobile device.').format(self.device))
-            return
-        if not keystore.is_p2pkh():
-            keystore.handler.show_error(_('This function is only available for p2pkh keystores when using {}.').format(self.device))
-            return
+    def show_address(self, wallet, keystore, address):
         change, index = wallet.get_address_index(address)
         keypath = '%s/%d/%d' % (keystore.derivation, change, index)
         xpub = self.get_client(keystore)._get_xpub(keypath)

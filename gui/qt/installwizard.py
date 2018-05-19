@@ -10,13 +10,17 @@ from PyQt5.QtWidgets import *
 
 from electrum import Wallet, WalletStorage
 from electrum.util import UserCancelled, InvalidPassword
-from electrum.base_wizard import BaseWizard, HWD_SETUP_DECRYPT_WALLET, GoBack
+from electrum.base_wizard import BaseWizard, HWD_SETUP_DECRYPT_WALLET
 from electrum.i18n import _
 
 from .seed_dialog import SeedLayout, KeysLayout
 from .network_dialog import NetworkChoiceLayout
 from .util import *
 from .password_dialog import PasswordLayout, PasswordLayoutForHW, PW_NEW
+
+
+class GoBack(Exception):
+    pass
 
 
 MSG_ENTER_PASSWORD = _("Choose a password to encrypt your wallet keys.") + '\n'\
@@ -227,10 +231,10 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
         self.name_e.setText(n)
 
         while True:
-            if self.loop.exec_() != 2:  # 2 = next
-                return
             if self.storage.file_exists() and not self.storage.is_encrypted():
                 break
+            if self.loop.exec_() != 2:  # 2 = next
+                return
             if not self.storage.file_exists():
                 break
             wallet_from_memory = get_wallet_from_daemon(self.storage.path)
@@ -530,7 +534,7 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
             _("Please share it with your cosigners.")
         ])
         vbox = QVBoxLayout()
-        layout = SeedLayout(xpub, title=msg, icon=False, for_seed_words=False)
+        layout = SeedLayout(xpub, title=msg, icon=False)
         vbox.addLayout(layout.layout())
         self.exec_layout(vbox, _('Master Public Key'))
         return None

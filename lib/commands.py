@@ -426,6 +426,7 @@ class Commands:
         if rbf:
             tx.set_rbf(True)
         if not unsigned:
+            run_hook('sign_tx', self.wallet, tx)
             self.wallet.sign_transaction(tx, password)
         return tx
 
@@ -646,7 +647,8 @@ class Commands:
                 util.print_error('Got Response for %s' % address)
             except BaseException as e:
                 util.print_error(str(e))
-        self.network.subscribe_to_addresses([address], callback)
+        h = self.network.addr_to_scripthash(address)
+        self.network.send([('blockchain.scripthash.subscribe', [h])], callback)
         return True
 
     @command('wn')

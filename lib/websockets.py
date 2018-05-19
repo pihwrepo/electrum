@@ -84,7 +84,9 @@ class WsClientThread(util.DaemonThread):
             l = self.subscriptions.get(addr, [])
             l.append((ws, amount))
             self.subscriptions[addr] = l
-            self.network.subscribe_to_addresses([addr], self.response_queue.put)
+            h = self.network.addr_to_scripthash(addr)
+            self.network.send([('blockchain.scripthash.subscribe', [h])], self.response_queue.put)
+
 
     def run(self):
         threading.Thread(target=self.reading_thread).start()

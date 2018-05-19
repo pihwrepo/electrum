@@ -114,6 +114,7 @@ class ExchangeBase(PrintError):
         rates = self.get_rates('')
         return sorted([str(a) for (a, b) in rates.items() if b is not None and len(a)==3])
 
+
 class BitcoinAverage(ExchangeBase):
 
     def get_rates(self, ccy):
@@ -324,12 +325,9 @@ class NegocieCoins(ExchangeBase):
         json = self.get_json('api.bitvalor.com', '/v1/ticker.json')
         return {'BRL': Decimal(json['ticker_1h']['exchanges']['NEG']['last'])}
 
-class TheRockTrading(ExchangeBase):
+    def history_ccys(self):
+        return ['BRL']
 
-    def get_rates(self, ccy):
-        json = self.get_json('api.therocktrading.com', 
-                             '/v1/funds/BTCEUR/ticker')
-        return {'EUR': Decimal(json['last'])}
 
 class Unocoin(ExchangeBase):
 
@@ -569,6 +567,6 @@ class FxThread(ThreadJob):
         return self.fiat_value(satoshis, self.history_rate(d_t))
 
     def timestamp_rate(self, timestamp):
-        from .util import timestamp_to_datetime
+        from electrum.util import timestamp_to_datetime
         date = timestamp_to_datetime(timestamp)
         return self.history_rate(date)

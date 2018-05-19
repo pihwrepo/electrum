@@ -51,10 +51,7 @@ class RequestList(MyTreeWidget):
         if not item.isSelected():
             return
         addr = str(item.text(1))
-        req = self.wallet.receive_requests.get(addr)
-        if req is None:
-            self.update()
-            return
+        req = self.wallet.receive_requests[addr]
         expires = age(req['time'] + req['exp']) if req.get('exp') else _('Never')
         amount = req['amount']
         message = self.wallet.labels.get(addr, '')
@@ -113,10 +110,7 @@ class RequestList(MyTreeWidget):
         if not item:
             return
         addr = str(item.text(1))
-        req = self.wallet.receive_requests.get(addr)
-        if req is None:
-            self.update()
-            return
+        req = self.wallet.receive_requests[addr]
         column = self.currentColumn()
         column_title = self.headerItem().text(column)
         column_data = item.text(column)

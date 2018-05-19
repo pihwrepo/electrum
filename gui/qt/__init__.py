@@ -41,7 +41,6 @@ import PyQt5.QtCore as QtCore
 from electrum.i18n import _, set_language
 from electrum.plugins import run_hook
 from electrum import WalletStorage
-from electrum.base_wizard import GoBack
 # from electrum.synchronizer import Synchronizer
 # from electrum.verifier import SPV
 # from electrum.util import DebugMem
@@ -49,7 +48,7 @@ from electrum.util import (UserCancelled, print_error,
                            WalletFileException, BitcoinException)
 # from electrum.wallet import Abstract_Wallet
 
-from .installwizard import InstallWizard
+from .installwizard import InstallWizard, GoBack
 
 
 try:
@@ -185,7 +184,7 @@ class ElectrumGui:
         run_hook('on_new_window', w)
         return w
 
-    def start_new_window(self, path, uri, app_is_starting=False):
+    def start_new_window(self, path, uri):
         '''Raises the window for the wallet if it is open.  Otherwise
         opens the wallet and creates a new window for it'''
         try:
@@ -195,11 +194,7 @@ class ElectrumGui:
             d = QMessageBox(QMessageBox.Warning, _('Error'),
                             _('Cannot load wallet') + ' (1):\n' + str(e))
             d.exec_()
-            if app_is_starting:
-                # do not return so that the wizard can appear
-                wallet = None
-            else:
-                return
+            return
         if not wallet:
             storage = WalletStorage(path, manual_upgrades=True)
             wizard = InstallWizard(self.config, self.app, self.plugins, storage)
@@ -274,7 +269,7 @@ class ElectrumGui:
         self.timer.start()
         self.config.open_last_wallet()
         path = self.config.get_wallet_path()
-        if not self.start_new_window(path, self.config.get('url'), app_is_starting=True):
+        if not self.start_new_window(path, self.config.get('url')):
             return
         signal.signal(signal.SIGINT, lambda *args: self.app.quit())
 

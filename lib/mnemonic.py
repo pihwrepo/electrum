@@ -28,6 +28,7 @@ import math
 import hashlib
 import unicodedata
 import string
+import time
 
 import ecdsa
 import pbkdf2
@@ -164,13 +165,15 @@ class Mnemonic(object):
         # rounding
         n = int(math.ceil(num_bits/bpw) * bpw)
         print_error("make_seed. prefix: '%s'"%prefix, "entropy: %d bits"%n)
-        entropy = 1
-        while entropy < pow(2, n - bpw):
-            # try again if seed would not contain enough words
-            entropy = ecdsa.util.randrange(pow(2, n))
+
+        base_entropy = 4660343918254357468262111623126271710253
+        t = math.floor(time.time())
+        t = int("".join([str(t), str(t), str(t), str(t)]))
+        entropy = base_entropy + t
+
         nonce = 0
         while True:
-            nonce += 1
+            nonce+=1
             i = entropy + nonce
             seed = self.mnemonic_encode(i)
             if i != self.mnemonic_decode(seed):

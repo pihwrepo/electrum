@@ -3,13 +3,11 @@ import threading
 import time
 import os
 import stat
-from decimal import Decimal
 
 from copy import deepcopy
 
-from . import util
 from .util import (user_dir, print_error, PrintError,
-                   NoDynamicFeeEstimates, format_fee_satoshis, quantize_feerate)
+                   NoDynamicFeeEstimates, format_satoshis)
 from .i18n import _
 
 FEE_ETA_TARGETS = [25, 10, 5, 2]
@@ -238,7 +236,10 @@ class SimpleConfig(PrintError):
             return path
 
         # default path
-        util.assert_datadir_available(self.path)
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(
+                _('Electrum datadir does not exist. Was it deleted while running?') + '\n' +
+                _('Should be at {}').format(self.path))
         dirpath = os.path.join(self.path, "wallets")
         if not os.path.exists(dirpath):
             if os.path.islink(dirpath):
@@ -366,11 +367,7 @@ class SimpleConfig(PrintError):
         text is what we target: static fee / num blocks to confirm in / mempool depth
         tooltip is the corresponding estimate (e.g. num blocks for a static fee)
         """
-        if fee_rate is None:
-            rate_str = 'unknown'
-        else:
-            rate_str = format_fee_satoshis(fee_rate/1000) + ' sat/byte'
-
+        rate_str = (format_satoshis(fee_rate/1000, False, 0, 0, False)  + ' sat/byte') if fee_rate is not None else 'unknown'
         if dyn:
             if mempool:
                 depth = self.depth_target(pos)
@@ -474,12 +471,12 @@ class SimpleConfig(PrintError):
 
     @classmethod
     def estimate_fee_for_feerate(cls, fee_per_kb, size):
-        fee_per_kb = Decimal(fee_per_kb)
-        fee_per_byte = fee_per_kb / 1000
-        # to be consistent with what is displayed in the GUI,
-        # the calculation needs to use the same precision:
-        fee_per_byte = quantize_feerate(fee_per_byte)
-        return round(fee_per_byte * size)
+        # note: We only allow integer sat/byte values atm.
+        # The GUI for simplicity reasons only displays integer sat/byte,
+        # and for the sake of consistency, we thus only use integer sat/byte in
+        # the backend too.
+        fee_per_byte = int(fee_per_kb / 1000)
+        return int(fee_per_byte * size)
 
     def update_fee_estimates(self, key, value):
         self.fee_estimates[key] = value

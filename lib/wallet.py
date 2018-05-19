@@ -45,8 +45,8 @@ import sys
 
 from .i18n import _
 from .util import (NotEnoughFunds, PrintError, UserCancelled, profiler,
-                   format_satoshis, format_fee_satoshis, NoDynamicFeeEstimates,
-                   TimeoutException, WalletFileException, BitcoinException)
+                   format_satoshis, NoDynamicFeeEstimates, TimeoutException,
+                   WalletFileException, BitcoinException)
 
 from .bitcoin import *
 from .version import *
@@ -215,10 +215,10 @@ class Abstract_Wallet(PrintError):
         self.load_addresses()
         self.test_addresses_sanity()
         self.load_transactions()
-        self.load_local_history()
-        self.build_spent_outpoints()
         self.check_history()
         self.load_unverified_transactions()
+        self.load_local_history()
+        self.build_spent_outpoints()
         self.remove_local_transactions_we_dont_have()
 
         # there is a difference between wallet.up_to_date and interface.is_up_to_date()
@@ -541,19 +541,20 @@ class Abstract_Wallet(PrintError):
 
     def get_wallet_delta(self, tx):
         """ effect of tx on wallet """
-        is_relevant = False  # "related to wallet?"
+        addresses = self.get_addresses()
+        is_relevant = False
         is_mine = False
         is_pruned = False
         is_partial = False
         v_in = v_out = v_out_mine = 0
-        for txin in tx.inputs():
-            addr = txin.get('address')
-            if self.is_mine(addr):
+        for item in tx.inputs():
+            addr = item.get('address')
+            if addr in addresses:
                 is_mine = True
                 is_relevant = True
-                d = self.txo.get(txin['prevout_hash'], {}).get(addr, [])
+                d = self.txo.get(item['prevout_hash'], {}).get(addr, [])
                 for n, v, cb in d:
-                    if n == txin['prevout_n']:
+                    if n == item['prevout_n']:
                         value = v
                         break
                 else:
@@ -568,7 +569,7 @@ class Abstract_Wallet(PrintError):
             is_partial = False
         for addr, value in tx.get_outputs():
             v_out += value
-            if self.is_mine(addr):
+            if addr in addresses:
                 v_out_mine += value
                 is_relevant = True
         if is_pruned:
@@ -1127,8 +1128,6 @@ class Abstract_Wallet(PrintError):
                 summary['unrealized_gains'] = Fiat(unrealized, fx.ccy)
                 summary['start_fiat_balance'] = Fiat(fx.historical_value(start_balance, start_date), fx.ccy)
                 summary['end_fiat_balance'] = Fiat(fx.historical_value(end_balance, end_date), fx.ccy)
-                summary['start_fiat_value'] = Fiat(fx.historical_value(COIN, start_date), fx.ccy)
-                summary['end_fiat_value'] = Fiat(fx.historical_value(COIN, end_date), fx.ccy)
         else:
             summary = {}
         return {
@@ -1169,7 +1168,7 @@ class Abstract_Wallet(PrintError):
             if fee is not None:
                 size = tx.estimated_size()
                 fee_per_byte = fee / size
-                extra.append(format_fee_satoshis(fee_per_byte) + ' sat/b')
+                extra.append('%.1f sat/b'%(fee_per_byte))
             if fee is not None and height in (TX_HEIGHT_UNCONF_PARENT, TX_HEIGHT_UNCONFIRMED) \
                and self.network and self.network.config.has_fee_mempool():
                 exp_n = self.network.config.fee_to_depth(fee_per_byte)
@@ -2362,3 +2361,4 @@ class Wallet(object):
         if wallet_type in wallet_constructors:
             return wallet_constructors[wallet_type]
         raise RuntimeError("Unknown wallet type: " + str(wallet_type))
+
